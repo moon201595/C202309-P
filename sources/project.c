@@ -330,9 +330,9 @@ void printSummary(float expenses[GOODS][PRICE], //종료 시 이번 달 지출 및 소득 �
   // 현재 달의 지출과 소득 총합 구하기
   for (int i = 0; i < GOODS; i++) {
     if (calendar[currentYear - 1][currentMonth - 1][i] == 1.0) {
-      currentMonthExpense += expenses[i][1];
-      currentMonthIncome += incomes[i][1];
-    }
+      currentMonthExpense += *(*(expenses + i) + 1);
+      currentMonthIncome += *(*(incomes + i) + 1);
+    } // expenses[i][1],  incomes[i][1] -> 이중 포인터로 
   }
 
   printf("%d년 %d월의 지출 합: %.2f원\n", currentYear, currentMonth,
