@@ -2,93 +2,88 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define _CRT_SECURE_NO_WARNINGS
-#define GOODS 100             // 산 물건
-#define PRICE 100             // 물건의 가격
-#define EARN 100              // 얻은 돈
-#define YEAR 30                // 년도
-#define MONTH 12              // 월
-#define DAY 31                // 일
-#define INCOME_CATEGORIES 4   // 소득 항목
-#define EXPENSE_CATEGORIES 6  // 소비 항목
+#define GOODS 100  // 산 물건
 
-char account_book[3];  // 가계부
+struct Account_Book {  // 날짜, 내역, 금액을 담은 구조체
+  int year;
+  int month;
+  int day;
+  char description[20]; //내역
+  float amount; //금액 
+};
 
-float calendar[YEAR][MONTH][DAY];  // 날짜 저장하는 배열
+struct Account_Book expenses[GOODS];  // 지출 내역을 담을 구조체 배열
+struct Account_Book incomes[GOODS];  // 소득 내역을 담을 구조체 배열
+int expense_count = 0;               // 입력된 지출 내역의 개수
+int income_count = 0;                // 입력된 소득 내역의 개수
 
-char income_types[INCOME_CATEGORIES][20] =  // 소득항목을 저장하는 배열
-    {0};
-
-char expense_types[EXPENSE_CATEGORIES][20] =  // 소비항목을 저장하는 배열
-    {0};
-
-float incomes[GOODS][EARN];    // 소득내역
-float expenses[GOODS][PRICE];  // 지출내역
-int year, month, day;          // 년, 월, 일 저장 변수
-int expense_count = 0;         // 입력한 지출 개수 저장 변수
-int income_count = 0;          // 입력한 소득 개수 저장 변수
-
-void input_Expense(float expenses[GOODS][PRICE], // 지출 입력을 위한 함수 선언
-                   char expense_types[EXPENSE_CATEGORIES][20]);
-
-void input_Income(float incomes[GOODS][EARN],    // 소득 입력을 위한 함수 선언
-                  char income_types[INCOME_CATEGORIES][20]);
+void input_Expense(struct Account_Book expenses[]); // 지출 입력을 위한 함수 선언
+void input_Income(struct Account_Book incomes[]); // 소득 입력을 위한 함수 선언
 
 
 // 지출 및 소득 수정을 위한 함수 선언
 // 이 함수가 호출될 때 아래의 두 함수가 이 함수 안에서 호출될 예정
-void modify_list(float expenses[GOODS][PRICE], float incomes[GOODS][EARN],
-                 char expense_types[EXPENSE_CATEGORIES][20],
-                 char income_types[INCOME_CATEGORIES][20]);
+void modify_list(struct Account_Book expenses[], struct Account_Book incomes[]);
+void modify_Expense(struct Account_Book expenses[]); // 지출 수정을 위한 함수 선언
+void modify_Income(struct Account_Book incomes[]); // 소득 수정을 위한 함수 선언
 
-void modify_Expense(float expenses[GOODS][PRICE],   // 지출 수정을 위한 함수 선언
-                    char expense_types[EXPENSE_CATEGORIES][20]);
-
-void modify_Income(float incomes[GOODS][EARN],      // 소득 수정을 위한 함수 선언
-                   char income_types[INCOME_CATEGORIES][20]);
-
-void calculateTotal(float expenses[GOODS][PRICE], float incomes[GOODS][EARN],
-                    int year, int month); // 특정 월의 소득과 지출 총합 출력 함수 선언
-                                          // display_list에서 호출할 것임
 
 void display_list(int year, int month);  // 특정 월의 소득과 지출 내역 출력 함수 선언
+void calculateTotal(struct Account_Book expenses[],  // 특정 월의 소득과 지출 총합 출력 함수 선언
+                    struct Account_Book incomes[],
+                    int expense_count, int income_count, int year, int month);
 
-void initialize_calendar(float calendar[YEAR][MONTH][DAY]);
+void decideCurrent(  // 마지막 지출, 소득 입력 날짜를 현재 날짜로 인식하는 함수 선언
+                     // 아래 세 함수에 사용
+    struct Account_Book expenses[],  
+    struct Account_Book incomes[], int expense_count, int income_count,
+    int *currentYear, int *currentMonth);
 
-void printSummary(
-    float (*expenses)[PRICE],  // 종료 시 이번 달 지출, 소득 총합 함수 선언
-    float (*incomes)[EARN], int currentYear, int currentMonth);
+// 종료 시 이번 달 지출, 소득 총합 함수 선언
+void printSummary(struct Account_Book expenses[], int expense_count, 
+                  struct Account_Book incomes[], int income_count);
+
+// 종료 시 이번 달 지출, 소득과 저번 달 지출, 소득 비율 증감 출력 함수 선언
+void compare_last_month(struct Account_Book expenses[],
+                        struct Account_Book incomes[], int currentYear,
+                           int currentMonth);
+
+// 종료 시 최근 3달 지출 및 소득 합계 평균 출력 함수 선언
+void average_last_3_months(struct Account_Book expenses[],
+                           struct Account_Book incomes[], int currentYear,
+                           int currentMonth);
 
 int main() {
   int choice = -1;  // 사용자 입력 메뉴를 저장하기 위한 변수
   int terminate = 0; // 종료를 위한 변수
 
-  initialize_calendar(calendar);  // 캘린더 초기화
-
   while (!terminate) {
     printf("------------------\n");
     printf("메뉴를 입력해주세요.\n");
     printf(
-        "1. 지출 입력\n2. 소득 입력\n3. 지출 및 소득 내역 수정\n4."
-        " 특정 월소득 및 지출 확인\n5. 종료\n");
+        "1. 지출 입력\n2. 소득 입력\n3. 지출 및 소득 수정\n4. 특정 달의 내역 "
+        "확인\n5. 종료\n");
     printf("------------------\n");
 
     scanf_s("%d", &choice);
 
     switch (choice) {
       case 1:  // 지출 입력 및 저장
-        input_Expense(expenses, expense_types);
+        input_Expense(expenses);
         break;
-      case 2:  // 소득 입력 및 저장
-        input_Income(incomes, income_types);
+      case 2: // 소득 입력 및 저장
+        input_Income(incomes);
         break;
       case 3:  // 지출 및 소득내역을 수정
-        modify_list(expenses, incomes, expense_types, income_types);
+        modify_list(expenses, incomes);
         break;
       case 4:  //특정 월소득 및 지출 확인
-        display_list(year, month);
+        display_list(0, 0);
         break;
       case 5:  //종료 및 소비평가 출력
+        printSummary(expenses, expense_count, incomes, income_count);
+        compare_last_month(expenses, incomes, expense_count, income_count);
+        average_last_3_months(expenses, incomes, expense_count, income_count);
         terminate = 1;
         break;
 
@@ -96,137 +91,61 @@ int main() {
         printf("올바른 메뉴를 선택해주세요.\n");
         break;
     }
-
-    if (terminate == 1) { //종료시 이번 달 지출, 소비 총합 출력
-      printSummary(expenses, incomes, year, month);
-      printf("종료를 선택하셨습니다. 프로그램을 종료합니다.\n");
-      break;
-     
-    }
   }
+
   return 0;
 }
 
-void initialize_calendar(float calendar[YEAR][MONTH][DAY]) {  //달력 초기화 함수 정의
-  for (int y = 0; y < YEAR; y++) {
-    for (int m = 0; m < MONTH; m++) {
-      for (int d = 0; d < DAY; d++) {
-        calendar[y][m][d] = 0.0;  // 0으로 초기화
-      }
-    }
-  }
-}
-
-void input_Expense(float expenses[GOODS][PRICE],   //지출 입력을 위한 함수정의
-                   char expense_types[EXPENSE_CATEGORIES][20]) {
-  int input_year, input_month, input_day;
+void input_Expense(struct Account_Book expenses[]) { //지출 입력을 위한 함수 정의
   printf("저장할 날짜를 입력하세요(YY MM DD): ");
-  scanf_s("%d %d %d", &input_year, &input_month, &input_day);
+  scanf_s("%d %d %d", &expenses[expense_count].year,
+          &expenses[expense_count].month, &expenses[expense_count].day);
 
-  if (input_year > 0 && input_year <= YEAR && input_month > 0 &&
-      input_month <= MONTH && input_day > 0 && input_day <= DAY) {
-    calendar[input_year - 1][input_month - 1][input_day - 1] = 1.0;
+  printf("지출 내역을 입력하세요: ");
+  scanf_s("%19s", expenses[expense_count].description, 20);
 
-    // 전역 변수에 날짜 저장
-    year = input_year;
-    month = input_month;
-    day = input_day;
-  } else {
-    printf("유효하지 않은 날짜입니다.\n");
-    return;
-  }
+  printf("지출 금액을 입력하세요: ");
+  scanf_s("%f", &expenses[expense_count].amount);
 
-  
-
-  char temp_expenses[20]; //문자열을 배열에 저장하기 위한 임시 변수
-
-  for (int i = 0; i < GOODS; i++) {
-    printf("지출 항목(술자리, 담배, 외식 및 배달, 커피, 생활용품, 옷)을 입력하세요. (1 입력 시 종료): ");
-    scanf_s("%19s", expense_types[i], 20);
-
-    if (expense_types[i][0] == '1') {
-      printf("'1'을 입력하셨습니다. 지출 입력을 종료합니다.\n");
-      break;
-    }
-
-    printf("지출 내역을 입력하세요: ");
-    scanf_s("%19s", temp_expenses, 20);  // 문자열을 임시 배열에 저장
-
-    strcpy_s(expense_types[i], sizeof(expense_types[i]), temp_expenses);
-
-    printf("해당 내역의 금액을 입력하세요: ");
-    scanf_s("%f", &expenses[i][0]);
-    printf("입력된 지출 값: %.2f\n", expenses[i][0]);
-    expense_count++;
-  }
-  
-  printf("%d년 %d월 %d일에 %d개의 내용이 저장되었습니다.\n", year, month, day,
-         expense_count);
+  expense_count++;
+  printf("%d년 %d월 %d일에 내역이 저장되었습니다.\n",
+         expenses[expense_count - 1].year, expenses[expense_count - 1].month,
+         expenses[expense_count - 1].day);
 }
 
-
-void input_Income(float incomes[GOODS][EARN],   //소득 입력을 위한 함수 정의
-                  char income_types[INCOME_CATEGORIES][20]) {
-  int input_year, input_month, input_day;
+void input_Income(struct Account_Book incomes[]) {  //소득 입력을 위한 함수 정의
   printf("저장할 날짜를 입력하세요(YY MM DD): ");
-  scanf_s("%d %d %d", &input_year, &input_month, &input_day);
+  scanf_s("%d %d %d", &incomes[income_count].year, &incomes[income_count].month,
+          &incomes[income_count].day);
 
-  if (input_year > 0 && input_year <= YEAR && input_month > 0 &&
-      input_month <= MONTH && input_day > 0 && input_day <= DAY) {
-    calendar[input_year - 1][input_month - 1][input_day - 1] = 1.0;
+  printf("소득 내역을 입력하세요: ");
+  scanf_s("%19s", incomes[income_count].description, 20);
 
-    year = input_year;
-    month = input_month;
-    day = input_day;
-  } else {
-    printf("유효하지 않은 날짜입니다.\n");
-    return;
-  }
+  printf("소득 금액을 입력하세요: ");
+  scanf_s("%f", &incomes[income_count].amount);
 
-  char temp_incomes[20];  // 문자열을 배열에 저장하기 위한 임시 변수
-
-  for (int i = 0; i < GOODS; i++) {
-    printf("소득 항목(일반, 술자리, 외식 및 배달, 커피)을 입력하세요(1 입력 시 종료): ");
-    scanf_s("%19s", income_types[i], 20);
-
-    if (income_types[i][0] == '1') {
-      printf("'1'을 입력하셨습니다. 소득 입력을 종료합니다.\n");
-      break;
-    }
-
-    printf("소득 내역을 입력하세요: ");
-    scanf_s("%19s", temp_incomes, 20);  // 문자열을 임시 배열에 저장
-
-    strcpy_s(income_types[i], sizeof(income_types[i]), temp_incomes);  
-
-    printf("해당 내역의 금액을 입력하세요: ");
-    scanf_s("%f", &incomes[i][0]);
-
-    income_count++;
-  }
-
-  printf("%d년 %d월 %d일에 %d개의 내용이 저장되었습니다.\n", year, month, day,
-         income_count);
+  income_count++;
+  printf("%d년 %d월 %d일에 내역이 저장되었습니다.\n",
+         incomes[income_count - 1].year, incomes[income_count - 1].month,
+         incomes[income_count - 1].day);
 }
 
-// 지출, 소득 내역 수정 함수 정의
-void modify_list(float expenses[GOODS][PRICE], float incomes[GOODS][EARN],
-                 char expense_types[EXPENSE_CATEGORIES][20],
-                 char income_types[INCOME_CATEGORIES][20]) {
+void modify_list(struct Account_Book expenses[], // 지출, 소득 내역 수정 함수 정의
+                 struct Account_Book incomes[]) {
+  int choice;
   printf("수정할 내역을 선택하세요:\n");
   printf("1. 지출 내역 수정\n");
   printf("2. 소득 내역 수정\n");
   printf("3. 돌아가기\n");
 
-  int choice;
   scanf_s("%d", &choice);
 
   switch (choice) {
     case 1:
-      modify_Expense(expenses, expense_types); // 지출을 수정
+      modify_Expense(expenses); // 지출을 수정
       break;
     case 2:
-      modify_Income(incomes, income_types);   //소득을 수정
+      modify_Income(incomes); // 소득을 수정
       break;
     case 3:
       printf("돌아갑니다.\n");
@@ -237,92 +156,58 @@ void modify_list(float expenses[GOODS][PRICE], float incomes[GOODS][EARN],
   }
 }
 
-void modify_Expense(float expenses[GOODS][PRICE],  //지출 수정 함수 정의
-                    char expense_types[EXPENSE_CATEGORIES][20]) {
+void modify_Expense(struct Account_Book expenses[]) {  //지출 수정 함수 정의
   int input_year, input_month, input_day;
   printf("수정할 날짜를 입력하세요(YY MM DD): ");
   scanf_s("%d %d %d", &input_year, &input_month, &input_day);
 
-  char temp_modify[20];  // 문자열을 배열에 저장하기 위한 임시 변수
-
-  if (calendar[input_year - 1][input_month - 1][input_day - 1] == 1.0) {
-    int modify_index;
-    printf("수정할 지출 항목을 선택하세요 (0부터 시작): ");
-    scanf_s("%d", &modify_index);
-
-    if (modify_index >= 0 && modify_index < GOODS) {
-      printf("새로운 지출 항목을 입력하세요: ");
-      scanf_s("%s", expense_types[modify_index], 20);
+  for (int i = 0; i < expense_count; i++) {
+    if (expenses[i].year == input_year && expenses[i].month == input_month &&
+        expenses[i].day == input_day) {
+      printf("수정할 지출 내역을 선택하세요: ");
+      printf("%d월 %d일 - %s, %.2f원\n", expenses[i].month, expenses[i].day,
+             expenses[i].description, expenses[i].amount);
 
       printf("새로운 지출 내역을 입력하세요: ");
-      scanf_s("%19s", temp_modify, 20);  // 문자열을 임시 배열에 저장
-      strcpy_s(expense_types[modify_index], sizeof(expense_types[modify_index]),
-               temp_modify);
+      scanf_s("%s19", expenses[i].description, sizeof(expenses[i].description));
 
-     
+      printf("수정된 지출 금액을 입력하세요: ");
+      scanf_s("%f", &expenses[i].amount);
 
-      printf("새로운 지출 내역의 금액을 입력하세요: ");
-      scanf_s("%f", &expenses[modify_index][0]);
-
-      printf("%d년 %d월 %d일의 지출 내용이 수정되었습니다.\n", input_year,
+      printf("%d년 %d월 %d일의 지출 내역이 수정되었습니다.\n", input_year,
              input_month, input_day);
       return;
-    } else {
-      printf("올바른 지출 항목 인덱스를 선택하세요.\n");
     }
-  } else {
-    printf("%d년 %d월 %d일에 저장된 내역이 없습니다.\n", input_year,
-           input_month, input_day);
   }
+  printf("%d년 %d월 %d일에 저장된 내역이 없습니다.\n", input_year, input_month,
+         input_day);
 }
 
-void modify_Income(float incomes[GOODS][EARN],  //소득 수정 함수 정의
-                   char income_types[INCOME_CATEGORIES][20]) {
+void modify_Income(struct Account_Book incomes[]) {  //소득 수정 함수 정의
   int input_year, input_month, input_day;
   printf("수정할 날짜를 입력하세요(YY MM DD): ");
   scanf_s("%d %d %d", &input_year, &input_month, &input_day);
 
-  char temp_modify[20]; // 문자열을 배열에 저장하기 위한 임시 변수
-
-  if (calendar[input_year - 1][input_month - 1][input_day - 1] == 1.0) {
-    int modify_index;
-    printf("수정할 소득 항목을 선택하세요 (0부터 시작): ");
-    scanf_s("%d", &modify_index);
-
-    if (modify_index >= 0 && modify_index < GOODS) {
-      printf("새로운 소득 항목을 입력하세요: ");
-      scanf_s("%s", income_types[modify_index], 20);
+  for (int i = 0; i < income_count; i++) {
+    if (incomes[i].year == input_year && incomes[i].month == input_month &&
+        incomes[i].day == input_day) {
+      printf("수정할 소득 내역을 선택하세요: ");
+      printf("%d월 %d일 - %s, %.2f원\n", incomes[i].month, incomes[i].day,
+             incomes[i].description, incomes[i].amount);
 
       printf("새로운 소득 내역을 입력하세요: ");
-      scanf_s("%19s", temp_modify, 20); // 문자열을 임시 배열에 저장
-      strcpy_s(income_types[modify_index], sizeof(income_types[modify_index]),
-               temp_modify);
+      scanf_s("%s19", incomes[i].description, sizeof(incomes[i].description));
 
-      printf("새로운 내역의 금액을 입력하세요: ");
-      scanf_s("%f", &incomes[modify_index][0]);
+      printf("수정된 소득 금액을 입력하세요: ");
+      scanf_s("%f", &incomes[i].amount);
 
-      printf("%d년 %d월 %d일의 소득 내용이 수정되었습니다.\n", input_year,
+      printf("%d년 %d월 %d일의 소득 내역이 수정되었습니다.\n", input_year,
              input_month, input_day);
       return;
-    } else {
-      printf("올바른 소득 항목 인덱스를 선택하세요.\n");
     }
-  } else {
-    printf("%d년 %d월 %d일에 저장된 내역이 없습니다.\n", input_year,
-           input_month, input_day);
   }
-}
-
-void calculateTotal(float (*expenses)[PRICE], float (*incomes)[EARN],
-                    int year, int month) { // 특정 달 지출, 소비 총합 출력 함수 정의
-  float totalExpenses = 0.0;
-  float totalIncomes = 0.0;
-  for (int i = 0; i < GOODS; i++) {
-      totalExpenses += *(*(expenses + i) + 0);
-      totalIncomes += *(*(incomes + i) + 0);
-  }
-  printf("%d년 %d월의 총 지출: %.2f원\n", year, month, totalExpenses);
-  printf("%d년 %d월의 총 소득: %.2f원\n", year, month, totalIncomes);
+  printf("%d년 %d월 %d일에 저장된 내역이 없습니다.\n", input_year, input_month,
+         input_day);
 }
 
 void display_list(int year, int month) {  //특정 월 소득, 지출 내역 확인 함수 정의
@@ -331,31 +216,146 @@ void display_list(int year, int month) {  //특정 월 소득, 지출 내역 확인 함수 정
   printf("%d년 %d월의 내역을 출력합니다.\n", year, month);
 
   printf("지출 내역:\n");
-  for (int i = 0; i < expense_count ; i++) {
-      printf("%s: %.f원\n", expense_types[i], *(*(expenses + i) + 0)); 
+  for (int i = 0; i < expense_count; i++) {
+    if (expenses[i].year == year && expenses[i].month == month) {
+      printf("%d월 %d일: %s - %.2f원\n", expenses[i].month, expenses[i].day,
+             expenses[i].description, expenses[i].amount);
+    }
   }
-  print("\n");
-  printf("소득 내역:\n");
+
+  printf("수입 내역:\n");
   for (int i = 0; i < income_count; i++) {
-      printf("%s: %.f원\n", income_types[i], *(*(incomes + i) + 0));
+    if (incomes[i].year == year && incomes[i].month == month) {
+      printf("%d월 %d일: %s - %.2f원\n", incomes[i].month, incomes[i].day,
+             incomes[i].description, incomes[i].amount);
+    }
   }
-  print("\n");
-  calculateTotal(expenses, incomes, year, month); // 지출, 소득 총합 출력 함수 호출
+
+  calculateTotal(expenses, incomes, expense_count, income_count, year, month);
 }
 
+void calculateTotal(struct Account_Book expenses[], // 특정 달 지출, 소비 총합 출력 함수 정의
+                    struct Account_Book incomes[],
+                    int expense_count, int income_count, int year, int month) {
+  float totalExpenses = 0.0;
+  float totalIncomes = 0.0;
 
-void printSummary(float (*expenses)[PRICE], //종료 시 이번 달 지출 및 소득 총합 출력 함수 정의
-                             float (*incomes)[EARN], int year,
-                             int month) {
+  for (int i = 0; i < expense_count; ++i) {
+    if (expenses[i].year == year && expenses[i].month == month) {
+      totalExpenses += expenses[i].amount;
+    }
+  }
+
+  for (int i = 0; i < income_count; ++i) {
+    if (incomes[i].year == year && incomes[i].month == month) {
+      totalIncomes += incomes[i].amount;
+    }
+  }
+
+  printf("%d년 %d월의 총 지출: %.2f원\n", year, month, totalExpenses);
+  printf("%d년 %d월의 총 수입: %.2f원\n", year, month, totalIncomes);
+}
+
+void decideCurrent(struct Account_Book expenses[], //마지막 지출, 소득 입력 날짜를 현재 날짜로 인식하게 하는 함수 정의
+                   struct Account_Book incomes[],
+                   int expense_count, int income_count, int *currentYear,
+                   int *currentMonth) {
+  for (int i = 0; i < expense_count; ++i) {
+    if (expenses[i].year > *currentYear ||
+        (expenses[i].year == *currentYear &&
+         expenses[i].month > *currentMonth)) {
+      *currentYear = expenses[i].year;
+      *currentMonth = expenses[i].month;
+    }
+  }
+
+  for (int i = 0; i < income_count; ++i) {
+    if (incomes[i].year > *currentYear ||
+        (incomes[i].year == *currentYear && incomes[i].month > *currentMonth)) {
+      *currentYear = incomes[i].year;
+      *currentMonth = incomes[i].month;
+    }
+  }
+}
+
+// 종료 시 이번 달 지출 및 소득 총합 출력 함수 정의
+void printSummary(struct Account_Book expenses[], int expense_count,
+                  struct Account_Book incomes[], int income_count) {
+  int currentYear = 0, currentMonth = 0;  // 현재 년도와 월을 저장할 변수
+
+  decideCurrent(expenses, incomes, expense_count, income_count, &currentYear,
+                &currentMonth);
+
   float currentMonthExpense = 0.0, currentMonthIncome = 0.0;
 
-  // 현재 달의 지출과 소득 총합 구하기
-  for (int i = 0; i < GOODS; i++) {
-    currentMonthExpense += *(*(expenses + i) + 0);
-    currentMonthIncome += *(*(incomes + i) + 0);
+  for (int i = 0; i < expense_count; ++i) {   //지출에서 이번 달을 계산
+    if (expenses[i].year == currentYear && expenses[i].month == currentMonth) {
+      currentMonthExpense += expenses[i].amount;
+    }
   }
-  printf("%d년 %d월의 지출 합: %.f원\n", year, month,
+
+  for (int i = 0; i < income_count; ++i) {  //소득에서 이번 달을 계산
+    if (incomes[i].year == currentYear && incomes[i].month == currentMonth) {
+      currentMonthIncome += incomes[i].amount;
+    }
+  }
+
+  printf("%d년 %d월의 지출 합: %.f원\n", currentYear, currentMonth,
          currentMonthExpense);
-  printf("%d년 %d월의 소득 합: %.f원\n", year, month,
+  printf("%d년 %d월의 소득 합: %.f원\n", currentYear, currentMonth,
          currentMonthIncome);
+}
+
+// 종료 시 이번 달 지출, 소득과 저번 달 지출, 소득 비율 증감 출력 함수 정의
+void compare_last_month(struct Account_Book expenses[],
+                        struct Account_Book incomes[], int currentYear,
+                        int currentMonth) {
+
+  decideCurrent(expenses, incomes, expense_count, income_count, &currentYear,
+                &currentMonth);
+
+  float last_month_expenses = 0, last_month_incomes = 0;
+  for (int i = 0; i < expense_count; ++i) { //지출에서 저번 달을 계산
+    if (expenses[i].year == currentYear &&
+        expenses[i].month == currentMonth - 1) {
+      last_month_expenses += expenses[i].amount;
+    }
+  }
+
+  for (int i = 0; i < income_count; ++i) {  //소득에서 저번 달을 계산
+    if (incomes[i].year == currentYear &&
+        incomes[i].month == currentMonth - 1) {
+      last_month_incomes += incomes[i].amount;
+    }
+  }
+
+  float this_month_expenses = 0, this_month_incomes = 0;
+  for (int i = 0; i < expense_count; ++i) {  //지출에서 이번 달을 계산
+    if (expenses[i].year == currentYear && expenses[i].month == currentMonth) {
+      this_month_expenses += expenses[i].amount;
+    }
+  }
+
+  for (int i = 0; i < income_count; ++i) { //소득에서 이번 달을 계산
+    if (incomes[i].year == currentYear && incomes[i].month == currentMonth) {
+      this_month_incomes += incomes[i].amount;
+    }
+  }
+
+  float expense_ratio = this_month_expenses / last_month_expenses;
+  float income_ratio = this_month_incomes / last_month_incomes;
+
+  printf("저번 달에 비해 지출은 %.2f 증가했고, 소득은 %.2f 증가했습니다.\n",
+         expense_ratio, income_ratio);
+}
+
+// 종료 시 최근 3달 지출 및 소득 합계 평균 출력 함수 선언
+void average_last_3_months(struct Account_Book expenses[],
+                           struct Account_Book incomes[], int currentYear,
+                           int currentMonth) {
+
+  decideCurrent(expenses, incomes, expense_count, income_count, &currentYear,
+                &currentMonth); // 현재 날짜 계산 
+
+  //------------------------------수정--------------------------------
 }
