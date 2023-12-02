@@ -8,14 +8,16 @@ struct Account_Book {  // 날짜, 내역, 금액을 담은 구조체
   int year;
   int month;
   int day;
-  char description[20]; //내역
-  float amount; //금액 
+  char description[20];  // 내역
+  float amount;          // 금액
 };
 
 struct Account_Book expenses[GOODS];  // 지출 내역을 담을 구조체 배열
 struct Account_Book incomes[GOODS];  // 소득 내역을 담을 구조체 배열
 int expense_count = 0;               // 입력된 지출 내역의 개수
 int income_count = 0;                // 입력된 소득 내역의 개수
+
+// --------------------------------------함수 선언--------------------------------------
 
 void input_Expense(struct Account_Book expenses[]); // 지출 입력을 위한 함수 선언
 void input_Income(struct Account_Book incomes[]); // 소득 입력을 위한 함수 선언
@@ -53,6 +55,8 @@ void average_last_3_months(struct Account_Book expenses[],
                            struct Account_Book incomes[], int currentYear,
                            int currentMonth);
 
+
+//-----------------------------------main 함수-----------------------------------------
 int main() {
   int choice = -1;  // 사용자 입력 메뉴를 저장하기 위한 변수
   int terminate = 0; // 종료를 위한 변수
@@ -95,6 +99,9 @@ int main() {
 
   return 0;
 }
+
+
+//----------------------------------------함수 정의-------------------------------------
 
 void input_Expense(struct Account_Book expenses[]) { //지출 입력을 위한 함수 정의
   printf("저장할 날짜를 입력하세요(YY MM DD): ");
@@ -357,5 +364,36 @@ void average_last_3_months(struct Account_Book expenses[],
   decideCurrent(expenses, incomes, expense_count, income_count, &currentYear,
                 &currentMonth); // 현재 날짜 계산 
 
-  //------------------------------수정--------------------------------
+  float total_expenses = 0, total_incomes = 0;
+  int count_expenses = 0, count_incomes = 0;
+
+  for (int i = 0; i < expense_count; ++i) {  // 지출에서 최근 3달을 계산
+    if ((expenses[i].year == currentYear &&
+         expenses[i].month == currentMonth - 1) ||
+        (expenses[i].year == currentYear &&
+         expenses[i].month == currentMonth - 2) ||
+        (expenses[i].year == currentYear &&
+         expenses[i].month == currentMonth - 3)) {
+      total_expenses += expenses[i].amount;
+      count_expenses++;
+    }
+  }
+
+  for (int i = 0; i < income_count; ++i) {  // 소득에서 최근 3달을 계산
+    if ((incomes[i].year == currentYear &&
+         incomes[i].month == currentMonth - 1) ||
+        (incomes[i].year == currentYear &&
+         incomes[i].month == currentMonth - 2) ||
+        (incomes[i].year == currentYear &&
+         incomes[i].month == currentMonth - 3)) {
+      total_incomes += incomes[i].amount;
+      count_incomes++;
+    }
+  }
+
+  float avg_expenses = total_expenses / 3;
+  float avg_incomes = total_incomes / 3;
+
+  printf("최근 3개월 평균 지출: %.2f, 평균 소득: %.2f\n", avg_expenses,
+         avg_incomes);
 }
