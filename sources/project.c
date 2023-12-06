@@ -17,50 +17,61 @@ struct Account_Book incomes[GOODS];  // 소득 내역을 담을 구조체 배열
 int expense_count = 0;               // 입력된 지출 내역의 개수
 int income_count = 0;                // 입력된 소득 내역의 개수
 
-// --------------------------------------함수 선언--------------------------------------
+// --------------------------------------함수선언--------------------------------------
 
-void input_Expense(struct Account_Book expenses[]); // 지출 입력을 위한 함수 선언
-void input_Income(struct Account_Book incomes[]); // 소득 입력을 위한 함수 선언
-
+void input_Expense(
+    struct Account_Book expenses[]);  // 지출 입력을 위한 함수 선언
+void input_Income(struct Account_Book incomes[]);  // 소득 입력을 위한 함수 선언
 
 // 지출 및 소득 수정을 위한 함수 선언
 // 이 함수가 호출될 때 아래의 두 함수가 이 함수 안에서 호출될 예정
 void modify_list(struct Account_Book expenses[], struct Account_Book incomes[]);
-void modify_Expense(struct Account_Book expenses[]); // 지출 수정을 위한 함수 선언
-void modify_Income(struct Account_Book incomes[]); // 소득 수정을 위한 함수 선언
+void modify_Expense(
+    struct Account_Book expenses[]);  // 지출 수정을 위한 함수 선언
+void modify_Income(
+    struct Account_Book incomes[]);  // 소득 수정을 위한 함수 선언
 
+void display_list(
+    int *year, int *month, struct Account_Book expenses[],
+    struct Account_Book incomes[], int expense_count,
+    int income_count);  // 특정 월의 소득과 지출 내역 출력 함수 선언
 
-void display_list(int year, int month);  // 특정 월의 소득과 지출 내역 출력 함수 선언
-void calculateTotal(struct Account_Book expenses[],  // 특정 월의 소득과 지출 총합 출력 함수 선언
+void calculateTotal(struct Account_Book expenses[],  // 특정 월의 소득과 지출
                     struct Account_Book incomes[],
-                    int expense_count, int income_count, int year, int month);
+                    int expense_count,  // 총합 출력 함수 선언
+                    int income_count, int year, int month);
 
-void decideCurrent(  // 마지막 지출, 소득 입력 날짜를 현재 날짜로 인식하는 함수 선언
-                     // 아래 세 함수에 사용
-    struct Account_Book expenses[],  
-    struct Account_Book incomes[], int expense_count, int income_count,
-    int *currentYear, int *currentMonth);
+void decideCurrent(  // 마지막 지출, 소득 입력 날짜를 현재 날짜로 인식하는 함수
+                     // 선언 아래 세 함수에 사용
+    struct Account_Book expenses[], struct Account_Book incomes[],
+    int expense_count, int income_count, int *currentYear, int *currentMonth);
 
 // 종료 시 이번 달 지출, 소득 총합 함수 선언
-void printSummary(struct Account_Book expenses[], int expense_count, 
+void printSummary(struct Account_Book expenses[], int expense_count,
                   struct Account_Book incomes[], int income_count);
 
 // 종료 시 이번 달 지출, 소득과 저번 달 지출, 소득 비율 증감 출력 함수 선언
 void compare_last_month(struct Account_Book expenses[],
                         struct Account_Book incomes[], int currentYear,
-                           int currentMonth);
+                        int currentMonth);
 
 // 종료 시 최근 3달 지출 및 소득 합계 평균 출력 함수 선언
 void average_last_3_months(struct Account_Book expenses[],
                            struct Account_Book incomes[], int currentYear,
                            int currentMonth);
 
+// 파일을 account_list 메모장에 저장하는 함수 선언
+void saveAccount(struct Account_Book expenses[], int expense_count,
+                 struct Account_Book incomes[], int income_count);
 
-//-----------------------------------main 함수-----------------------------------------
+void loadFromAccount();  // 파일을 account_list 메모장에서 불러오는 함수 선언
+
+//-----------------------------------main함수-----------------------------------------
 int main() {
-  int choice = -1;  // 사용자 입력 메뉴를 저장하기 위한 변수
-  int terminate = 0; // 종료를 위한 변수
-
+  int choice = -1;    // 사용자 입력 메뉴를 저장하기 위한 변수
+  int terminate = 0;  // 종료를 위한 변수
+  int selected_year = 0;   // 사용자가 입력한 특정 년도
+  int selected_month = 0;  // 사용자가 입력한 특정 월
   while (!terminate) {
     printf("------------------\n");
     printf("메뉴를 입력해주세요.\n");
@@ -75,16 +86,17 @@ int main() {
       case 1:  // 지출 입력 및 저장
         input_Expense(expenses);
         break;
-      case 2: // 소득 입력 및 저장
+      case 2:  // 소득 입력 및 저장
         input_Income(incomes);
         break;
       case 3:  // 지출 및 소득내역을 수정
         modify_list(expenses, incomes);
         break;
-      case 4:  //특정 월소득 및 지출 확인
-        display_list(0, 0);
+      case 4:  // 특정 월소득 및 지출 확인
+        display_list(&selected_year, &selected_month, expenses, incomes,
+                     expense_count, income_count);
         break;
-      case 5:  //종료 및 소비평가 출력
+      case 5:  // 종료 및 소비평가 출력
         printSummary(expenses, expense_count, incomes, income_count);
         compare_last_month(expenses, incomes, expense_count, income_count);
         average_last_3_months(expenses, incomes, expense_count, income_count);
@@ -95,15 +107,16 @@ int main() {
         printf("올바른 메뉴를 선택해주세요.\n");
         break;
     }
+    
   }
 
   return 0;
 }
 
+//----------------------------------------함수정의-------------------------------------
 
-//----------------------------------------함수 정의-------------------------------------
-
-void input_Expense(struct Account_Book expenses[]) { //지출 입력을 위한 함수 정의
+void input_Expense(
+    struct Account_Book expenses[]) {  // 지출 입력을 위한 함수 정의
   printf("저장할 날짜를 입력하세요(YY MM DD): ");
   scanf_s("%d %d %d", &expenses[expense_count].year,
           &expenses[expense_count].month, &expenses[expense_count].day);
@@ -120,7 +133,8 @@ void input_Expense(struct Account_Book expenses[]) { //지출 입력을 위한 함수 정�
          expenses[expense_count - 1].day);
 }
 
-void input_Income(struct Account_Book incomes[]) {  //소득 입력을 위한 함수 정의
+void input_Income(struct Account_Book incomes[]) {  // 소득 입력을 위한 함수
+                                                    // 정의
   printf("저장할 날짜를 입력하세요(YY MM DD): ");
   scanf_s("%d %d %d", &incomes[income_count].year, &incomes[income_count].month,
           &incomes[income_count].day);
@@ -137,22 +151,22 @@ void input_Income(struct Account_Book incomes[]) {  //소득 입력을 위한 함수 정의
          incomes[income_count - 1].day);
 }
 
-void modify_list(struct Account_Book expenses[], // 지출, 소득 내역 수정 함수 정의
-                 struct Account_Book incomes[]) {
+void modify_list(
+    struct Account_Book expenses[],  // 지출, 소득 내역 수정 함수 정의
+    struct Account_Book incomes[]) {
   int choice;
   printf("수정할 내역을 선택하세요:\n");
   printf("1. 지출 내역 수정\n");
   printf("2. 소득 내역 수정\n");
   printf("3. 돌아가기\n");
-
   scanf_s("%d", &choice);
 
   switch (choice) {
     case 1:
-      modify_Expense(expenses); // 지출을 수정
+      modify_Expense(expenses);  // 지출을 수정
       break;
     case 2:
-      modify_Income(incomes); // 소득을 수정
+      modify_Income(incomes);  // 소득을 수정
       break;
     case 3:
       printf("돌아갑니다.\n");
@@ -163,7 +177,7 @@ void modify_list(struct Account_Book expenses[], // 지출, 소득 내역 수정 함수 정
   }
 }
 
-void modify_Expense(struct Account_Book expenses[]) {  //지출 수정 함수 정의
+void modify_Expense(struct Account_Book expenses[]) {  // 지출 수정 함수 정의
   int input_year, input_month, input_day;
   printf("수정할 날짜를 입력하세요(YY MM DD): ");
   scanf_s("%d %d %d", &input_year, &input_month, &input_day);
@@ -190,7 +204,7 @@ void modify_Expense(struct Account_Book expenses[]) {  //지출 수정 함수 정의
          input_day);
 }
 
-void modify_Income(struct Account_Book incomes[]) {  //소득 수정 함수 정의
+void modify_Income(struct Account_Book incomes[]) {  // 소득 수정 함수 정의
   int input_year, input_month, input_day;
   printf("수정할 날짜를 입력하세요(YY MM DD): ");
   scanf_s("%d %d %d", &input_year, &input_month, &input_day);
@@ -217,14 +231,16 @@ void modify_Income(struct Account_Book incomes[]) {  //소득 수정 함수 정의
          input_day);
 }
 
-void display_list(int year, int month) {  //특정 월 소득, 지출 내역 확인 함수 정의
+void display_list(int *year, int *month, struct Account_Book expenses[],
+                  struct Account_Book incomes[], int expense_count,
+                  int income_count) {
   printf("년도와 월을 입력하세요 (YY MM): ");
-  scanf_s("%d %d", &year, &month);
-  printf("%d년 %d월의 내역을 출력합니다.\n", year, month);
+  scanf_s("%d %d", year, month);
+  printf("%d년 %d월의 내역을 출력합니다.\n", *year, *month);
 
   printf("지출 내역:\n");
   for (int i = 0; i < expense_count; i++) {
-    if (expenses[i].year == year && expenses[i].month == month) {
+    if (expenses[i].year == *year && expenses[i].month == *month) {
       printf("%d월 %d일: %s - %.2f원\n", expenses[i].month, expenses[i].day,
              expenses[i].description, expenses[i].amount);
     }
@@ -232,18 +248,18 @@ void display_list(int year, int month) {  //특정 월 소득, 지출 내역 확인 함수 정
 
   printf("수입 내역:\n");
   for (int i = 0; i < income_count; i++) {
-    if (incomes[i].year == year && incomes[i].month == month) {
+    if (incomes[i].year == *year && incomes[i].month == *month) {
       printf("%d월 %d일: %s - %.2f원\n", incomes[i].month, incomes[i].day,
              incomes[i].description, incomes[i].amount);
     }
   }
 
-  calculateTotal(expenses, incomes, expense_count, income_count, year, month);
+  calculateTotal(expenses, incomes, expense_count, income_count, *year, *month);
 }
 
-void calculateTotal(struct Account_Book expenses[], // 특정 달 지출, 소비 총합 출력 함수 정의
-                    struct Account_Book incomes[],
-                    int expense_count, int income_count, int year, int month) {
+void calculateTotal(struct Account_Book expenses[],
+                    struct Account_Book incomes[], int expense_count,
+                    int income_count, int year, int month) {
   float totalExpenses = 0.0;
   float totalIncomes = 0.0;
 
@@ -259,14 +275,15 @@ void calculateTotal(struct Account_Book expenses[], // 특정 달 지출, 소비 총합 �
     }
   }
 
-  printf("%d년 %d월의 총 지출: %.2f원\n", year, month, totalExpenses);
-  printf("%d년 %d월의 총 수입: %.2f원\n", year, month, totalIncomes);
+  printf("\n\n%d년 %d월의 총 지출: %.2f원\n\n", year, month, totalExpenses);
+  printf("\n\n%d년 %d월의 총 수입: %.2f원\n\n", year, month, totalIncomes);
 }
 
-void decideCurrent(struct Account_Book expenses[], //마지막 지출, 소득 입력 날짜를 현재 날짜로 인식하게 하는 함수 정의
-                   struct Account_Book incomes[],
-                   int expense_count, int income_count, int *currentYear,
-                   int *currentMonth) {
+void decideCurrent(
+    struct Account_Book expenses[],  // 마지막 지출, 소득 입력 날짜를 현재
+                                     // 날짜로 인식하게 하는 함수 정의
+    struct Account_Book incomes[], int expense_count, int income_count,
+    int *currentYear, int *currentMonth) {
   for (int i = 0; i < expense_count; ++i) {
     if (expenses[i].year > *currentYear ||
         (expenses[i].year == *currentYear &&
@@ -295,21 +312,21 @@ void printSummary(struct Account_Book expenses[], int expense_count,
 
   float currentMonthExpense = 0.0, currentMonthIncome = 0.0;
 
-  for (int i = 0; i < expense_count; ++i) {   //지출에서 이번 달을 계산
+  for (int i = 0; i < expense_count; ++i) {  // 지출에서 이번 달을 계산
     if (expenses[i].year == currentYear && expenses[i].month == currentMonth) {
       currentMonthExpense += expenses[i].amount;
     }
   }
 
-  for (int i = 0; i < income_count; ++i) {  //소득에서 이번 달을 계산
+  for (int i = 0; i < income_count; ++i) {  // 소득에서 이번 달을 계산
     if (incomes[i].year == currentYear && incomes[i].month == currentMonth) {
       currentMonthIncome += incomes[i].amount;
     }
   }
 
-  printf("%d년 %d월의 지출 합: %.f원\n", currentYear, currentMonth,
+  printf("\n\n%d년 %d월의 지출 합: %.f원\n\n", currentYear, currentMonth,
          currentMonthExpense);
-  printf("%d년 %d월의 소득 합: %.f원\n", currentYear, currentMonth,
+  printf("\n\n%d년 %d월의 소득 합: %.f원\n\n", currentYear, currentMonth,
          currentMonthIncome);
 }
 
@@ -317,19 +334,18 @@ void printSummary(struct Account_Book expenses[], int expense_count,
 void compare_last_month(struct Account_Book expenses[],
                         struct Account_Book incomes[], int currentYear,
                         int currentMonth) {
-
   decideCurrent(expenses, incomes, expense_count, income_count, &currentYear,
                 &currentMonth);
 
   float last_month_expenses = 0, last_month_incomes = 0;
-  for (int i = 0; i < expense_count; ++i) { //지출에서 저번 달을 계산
+  for (int i = 0; i < expense_count; ++i) {  // 지출에서 저번 달을 계산
     if (expenses[i].year == currentYear &&
         expenses[i].month == currentMonth - 1) {
       last_month_expenses += expenses[i].amount;
     }
   }
 
-  for (int i = 0; i < income_count; ++i) {  //소득에서 저번 달을 계산
+  for (int i = 0; i < income_count; ++i) {  // 소득에서 저번 달을 계산
     if (incomes[i].year == currentYear &&
         incomes[i].month == currentMonth - 1) {
       last_month_incomes += incomes[i].amount;
@@ -337,13 +353,13 @@ void compare_last_month(struct Account_Book expenses[],
   }
 
   float this_month_expenses = 0, this_month_incomes = 0;
-  for (int i = 0; i < expense_count; ++i) {  //지출에서 이번 달을 계산
+  for (int i = 0; i < expense_count; ++i) {  // 지출에서 이번 달을 계산
     if (expenses[i].year == currentYear && expenses[i].month == currentMonth) {
       this_month_expenses += expenses[i].amount;
     }
   }
 
-  for (int i = 0; i < income_count; ++i) { //소득에서 이번 달을 계산
+  for (int i = 0; i < income_count; ++i) {  // 소득에서 이번 달을 계산
     if (incomes[i].year == currentYear && incomes[i].month == currentMonth) {
       this_month_incomes += incomes[i].amount;
     }
@@ -352,17 +368,17 @@ void compare_last_month(struct Account_Book expenses[],
   float expense_ratio = this_month_expenses / last_month_expenses;
   float income_ratio = this_month_incomes / last_month_incomes;
 
-  printf("저번 달에 비해 지출은 %.2f 증가했고, 소득은 %.2f 증가했습니다.\n",
-         expense_ratio, income_ratio);
+  printf("\n\n저번 달 대비 지출 증감율 : %.2f\n\n", expense_ratio);
+  printf("\n\n저번 달 대비 소득 증감율 : %.2f\n\n", income_ratio);
+  printf("\n\n남은 잔액 : %.2f\n\n", this_month_incomes - this_month_expenses);
 }
 
 // 종료 시 최근 3달 지출 및 소득 합계 평균 출력 함수 선언
 void average_last_3_months(struct Account_Book expenses[],
                            struct Account_Book incomes[], int currentYear,
                            int currentMonth) {
-
   decideCurrent(expenses, incomes, expense_count, income_count, &currentYear,
-                &currentMonth); // 현재 날짜 계산 
+                &currentMonth);  // 현재 날짜 계산
 
   float total_expenses = 0, total_incomes = 0;
   int count_expenses = 0, count_incomes = 0;
@@ -394,6 +410,7 @@ void average_last_3_months(struct Account_Book expenses[],
   float avg_expenses = total_expenses / 3;
   float avg_incomes = total_incomes / 3;
 
-  printf("최근 3개월 평균 지출: %.2f, 평균 소득: %.2f\n", avg_expenses,
-         avg_incomes);
+  printf("\n\n최근 3개월 평균 지출: %.2f\n\n", avg_expenses);
+  printf("\n\n최근 3개월 평균 소득: %.2f\n\n", avg_incomes);
 }
+
