@@ -72,6 +72,8 @@ int main() {
   int terminate = 0;  // 종료를 위한 변수
   int selected_year = 0;   // 사용자가 입력한 특정 년도
   int selected_month = 0;  // 사용자가 입력한 특정 월
+
+  loadFromAccount();  // 파일 불러오기
   while (!terminate) {
     printf("------------------\n");
     printf("메뉴를 입력해주세요.\n");
@@ -107,9 +109,8 @@ int main() {
         printf("올바른 메뉴를 선택해주세요.\n");
         break;
     }
-    
   }
-
+  saveAccount(expenses, expense_count, incomes, income_count);  // 파일 저장
   return 0;
 }
 
@@ -414,3 +415,47 @@ void average_last_3_months(struct Account_Book expenses[],
   printf("\n\n최근 3개월 평균 소득: %.2f\n\n", avg_incomes);
 }
 
+// 파일을 account_list 메모장에 저장하는 함수 정의
+void saveAccount(struct Account_Book expenses[], int expense_count,
+                 struct Account_Book incomes[], int income_count) {
+  FILE *file;
+  fopen_s(&file, "account_list.txt", "a+");  // 파일 열기
+
+  if (file != NULL) {
+    fprintf(file, "Expense list:\n");  // 지출 내역 저장
+    for (int i = 0; i < expense_count; ++i) {
+      fprintf(file, "%d년 %d월 %d일 - %s, %.2f원\n", expenses[i].year,
+              expenses[i].month, expenses[i].day, expenses[i].description,
+              expenses[i].amount);
+    }
+
+    fprintf(file, "\nIncome list:\n");  // 소득 내역 저장
+    for (int i = 0; i < income_count; ++i) {
+      fprintf(file, "%d년 %d월 %d일 - %s, %.2f원\n", incomes[i].year,
+              incomes[i].month, incomes[i].day, incomes[i].description,
+              incomes[i].amount);
+    }
+
+    printf("파일에 데이터를 추가로 저장했습니다.\n");
+
+    fclose(file);
+  } else {
+    printf("파일을 열 수 없습니다.\n");
+  }
+}
+// 파일을 account_list 메모장에서 불러오는 함수 정의
+void loadFromAccount() {
+  FILE *file;
+  fopen_s(&file, "account_list.txt", "r");  // 파일 열기 (읽기 모드)
+
+  if (file != NULL) {
+    char buffer[1000];  // 파일 내용을 읽을 버퍼
+    while (fgets(buffer, sizeof(buffer), file) != NULL) {
+      printf("%s", buffer);  // 파일 내용을 화면에 출력
+    }
+
+    fclose(file);
+  } else {
+    printf("파일을 열 수 없습니다.\n");
+  }
+}
