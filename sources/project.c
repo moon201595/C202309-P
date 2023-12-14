@@ -11,14 +11,12 @@ struct Account_Book {  // ³¯Â¥, ³»¿ª, ±İ¾×À» ´ãÀº ±¸Á¶Ã¼
   char description[50];  // ³»¿ª
   float amount;          // ±İ¾×
 };
-
 struct Account_Book expenses[GOODS];  // ÁöÃâ ³»¿ªÀ» ´ãÀ» ±¸Á¶Ã¼ ¹è¿­
 struct Account_Book incomes[GOODS];  // ¼Òµæ ³»¿ªÀ» ´ãÀ» ±¸Á¶Ã¼ ¹è¿­
 int expense_count = 0;               // ÀÔ·ÂµÈ ÁöÃâ ³»¿ªÀÇ °³¼ö
 int income_count = 0;                // ÀÔ·ÂµÈ ¼Òµæ ³»¿ªÀÇ °³¼ö
 
 // --------------------------------------ÇÔ¼ö¼±¾ğ--------------------------------------
-
 void input_Expense(struct Account_Book expenses[]);  // ÁöÃâ ÀÔ·ÂÀ» À§ÇÑ ÇÔ¼ö ¼±¾ğ
 void input_Income(struct Account_Book incomes[]);  // ¼Òµæ ÀÔ·ÂÀ» À§ÇÑ ÇÔ¼ö ¼±¾ğ
 
@@ -60,7 +58,9 @@ void saveAccount(struct Account_Book expenses[], int expense_count, //ÆÄÀÏ ÀúÀåÇ
 
 void loadAccounts(struct Account_Book expenses[], struct Account_Book incomes[], //ÆÄÀÏ ºÒ·¯¿À´Â ÇÔ¼ö ¼±¾ğ
                   int *expense_count, int *income_count, const char *fileName);
-void displayAccounts(struct Account_Book accounts[], int count); //ºÒ·¯¿Â ÆÄÀÏ Ãâ·Â ÇÔ¼ö ¼±¾ğ
+
+void displayExpenses(struct Account_Book expenses[], int expense_count);  // ÁöÃâ ³»¿ª Ãâ·Â
+void displayIncomes(struct Account_Book incomes[],int income_count);  // ¼Òµæ ³»¿ª Ãâ·Â
     //-----------------------------------mainÇÔ¼ö-----------------------------------------
 int main() {
   int choice = -1;    // »ç¿ëÀÚ ÀÔ·Â ¸Ş´º¸¦ ÀúÀåÇÏ±â À§ÇÑ º¯¼ö
@@ -70,11 +70,10 @@ int main() {
   
   loadAccounts(expenses, incomes, &expense_count, &income_count, //ÆÄÀÏ ºÒ·¯¿À±â
                "account_list.txt");
-  void displayExpenses(struct Account_Book expenses[], int expense_count); //ÁöÃâ ³»¿ª Ãâ·Â
-  void displayIncomes(struct Account_Book incomes[], int income_count); //¼Òµæ ³»¿ª Ãâ·Â
-  
+  displayExpenses(expenses,  expense_count); //ÁöÃâ Ãâ·Â
+  displayIncomes(incomes, income_count);    //¼Òµæ Ãâ·Â
   while (!terminate) {
-    printf("******°¡°èºÎ******\n");
+    printf("\n\n******°¡°èºÎ******\n");
     printf("------------------\n");
     printf("¸Ş´º¸¦ ÀÔ·ÂÇØÁÖ¼¼¿ä.\n");
     printf(
@@ -230,6 +229,7 @@ void modify_Income(struct Account_Book incomes[]) {  // ¼Òµæ ¼öÁ¤ ÇÔ¼ö Á¤ÀÇ
          input_day);
 }
 
+//Æ¯Á¤ ´ŞÀÇ ÁöÃâ ¹× ¼Òµæ ³»¿ª Ãâ·ÂÇØÁÖ´Â ÇÔ¼ö Á¤ÀÇ
 void display_list(int *year, int *month, struct Account_Book expenses[],
                   struct Account_Book incomes[], int expense_count,
                   int income_count) {
@@ -256,6 +256,7 @@ void display_list(int *year, int *month, struct Account_Book expenses[],
   calculateTotal(expenses, incomes, expense_count, income_count, *year, *month);
 }
 
+// ÁöÃâ ¹× ¼Òµæ ÃÑÇÕ Ãâ·ÂÇØÁÖ´Â ÇÔ¼ö Á¤ÀÇ
 void calculateTotal(struct Account_Book expenses[],
                     struct Account_Book incomes[], int expense_count,
                     int income_count, int year, int month) {
@@ -366,8 +367,8 @@ void compare_last_month(struct Account_Book expenses[], int expense_count,
   float expense_ratio = this_month_expenses / last_month_expenses;
   float income_ratio = this_month_incomes / last_month_incomes;
 
-  printf("\n\nÀú¹ø ´Ş ´ëºñ ÁöÃâ Áõ°¨À² : %.2f\n", expense_ratio);
-  printf("\nÀú¹ø ´Ş ´ëºñ ¼Òµæ Áõ°¨À² : %.2f\n", income_ratio);
+  printf("\n\nÀú¹ø ´Ş ´ëºñ ÁöÃâ Áõ°¨À²('1'= µ¿ÀÏ): %.2f\n", expense_ratio);
+  printf("\nÀú¹ø ´Ş ´ëºñ ¼Òµæ Áõ°¨À²('1'= µ¿ÀÏ) : %.2f\n", income_ratio);
   printf("\n\n³²Àº ÀÜ¾× : %.f\n\n", this_month_incomes - this_month_expenses);
 }
 
@@ -498,14 +499,14 @@ void loadAccounts(struct Account_Book expenses[], struct Account_Book incomes[],
 
 //ºÒ·¯¿Â ÆÄÀÏ ³»¿ë Ãâ·ÂÇÏ´Â ÇÔ¼ö ¼±¾ğ
 void displayExpenses(struct Account_Book expenses[], int expense_count) {
-  printf("ÁöÃâ ³»¿ª:\n");
+  printf("\n\nÁöÃâ ³»¿ª:\n");
   for (int i = 0; i < expense_count; i++) {
     printf("%d³â %d¿ù %dÀÏ: %s - %.f¿ø\n", expenses[i].year, expenses[i].month,
            expenses[i].day, expenses[i].description, expenses[i].amount);
   }
 }
  void displayIncomes(struct Account_Book incomes[], int income_count) {
-  printf("¼Òµæ ³»¿ª:\n");
+  printf("\n\n¼Òµæ ³»¿ª:\n");
   for (int i = 0; i < income_count; i++) {
     printf("%d³â %d¿ù %dÀÏ: %s - %.f¿ø\n", incomes[i].year, incomes[i].month,
            incomes[i].day, incomes[i].description, incomes[i].amount);
